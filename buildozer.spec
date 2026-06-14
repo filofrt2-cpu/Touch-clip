@@ -1,13 +1,3 @@
-تمام! دلوقتي:
-
-**1. في خانة "Name your file..." اكتب:**
-```
-buildozer.spec
-```
-
-**2. في المنطقة الكبيرة "Enter file contents here" الصق الكود ده:**
-
-```ini
 [app]
 title = Touch Clip
 package.name = touchclip
@@ -24,6 +14,3 @@ android.ndk = 25b
 
 [buildozer]
 log_level = 2
-```
-
-**3. بعدين اضغط "Commit changes"** ✅
