@@ -31,13 +31,16 @@ try:
     def request_android_permissions():
         perms = [Permission.READ_EXTERNAL_STORAGE, Permission.WRITE_EXTERNAL_STORAGE]
         # أندرويد 13+ (API 33) بيستخدم أذونات الميديا الجديدة
-        for p in ("READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO"):
+        for p in ("READ_MEDIA_IMAGES", "READ_MEDIA_VIDEO", "MANAGE_EXTERNAL_STORAGE"):
             if hasattr(Permission, p):
                 perms.append(getattr(Permission, p))
         request_permissions(perms)
 
     def has_storage_permission():
         try:
+            # أندرويد 11+ MANAGE_EXTERNAL_STORAGE هو الأقوى
+            if hasattr(Permission, "MANAGE_EXTERNAL_STORAGE") and check_permission(Permission.MANAGE_EXTERNAL_STORAGE):
+                return True
             return check_permission(Permission.READ_EXTERNAL_STORAGE) or \
                    (hasattr(Permission, "READ_MEDIA_IMAGES") and check_permission(Permission.READ_MEDIA_IMAGES))
         except Exception:
@@ -388,11 +391,11 @@ class ZipPickerPopup(Popup):
         if not os.path.exists(default_path):
             default_path = "/sdcard"
 
-        # إنشاء مستعرض الملفات — بدون فلتر لضمان ظهور كل الملفات
+        # إنشاء مستعرض الملفات اليدوي
         self.file_chooser = FileChooserListView(
             path=default_path,
-            dirselect=False,
-            show_hidden=False
+            filters=["*.zip", "*.ZIP"],  # إظهار ملفات الـ ZIP فقط
+            dirselect=False
         )
         root.add_widget(self.file_chooser)
 
@@ -412,14 +415,11 @@ class ZipPickerPopup(Popup):
         self.content = root
 
     def _validate_and_pick(self, instance):
+        # جلب الملف الذي قمت بالضغط عليه وتحديده يدوياً
         selected = self.file_chooser.selection
-        if not selected:
-            return
-        path = selected[0]
-        if not path.lower().endswith(".zip"):
-            return  # مش ZIP، متعملش حاجة
-        self.dismiss()
-        self.on_select(path)
+        if selected:
+            self.dismiss()
+            self.on_select(selected[0])  # تمرير مسار الملف المختار للدالة الأساسية
 
 
 # =========================
@@ -1338,7 +1338,30 @@ function toggleReplies(btn) {
 class MyApp(App):
     def build(self):
         request_android_permissions()
+        self._request_manage_storage()
         return UI()
+
+    def _request_manage_storage(self):
+        """أندرويد 11+ يحتاج MANAGE_EXTERNAL_STORAGE يتفتح من الإعدادات"""
+        try:
+            from android.permissions import check_permission, Permission
+            from jnius import autoclass
+            if not hasattr(Permission, "MANAGE_EXTERNAL_STORAGE"):
+                return
+            if check_permission(Permission.MANAGE_EXTERNAL_STORAGE):
+                return
+            Environment = autoclass("android.os.Environment")
+            if Environment.isExternalStorageManager():
+                return
+            Intent = autoclass("android.content.Intent")
+            Settings = autoclass("android.provider.Settings")
+            Uri = autoclass("android.net.Uri")
+            PythonActivity = autoclass("org.kivy.android.PythonActivity")
+            intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+            intent.setData(Uri.parse("package:" + PythonActivity.mActivity.getPackageName()))
+            PythonActivity.mActivity.startActivity(intent)
+        except Exception:
+            pass
 
     def on_start(self):
         global AVATARS
