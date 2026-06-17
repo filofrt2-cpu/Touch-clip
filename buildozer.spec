@@ -13,7 +13,7 @@ requirements = python3,kivy,pillow
 orientation = portrait
 fullscreen = 0
 
-android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES,READ_MEDIA_VIDEO
+android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES,READ_MEDIA_VIDEO,MANAGE_EXTERNAL_STORAGE
 
 android.api = 35
 android.minapi = 26
