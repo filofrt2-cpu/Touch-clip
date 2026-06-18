@@ -14,9 +14,9 @@ fullscreen = 0
 
 android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE,READ_MEDIA_IMAGES,READ_MEDIA_VIDEO,MANAGE_EXTERNAL_STORAGE
 
-android.api = 35
+android.api = 34
 android.minapi = 26
-android.ndk = 28c
+android.ndk = 26b
 android.archs = arm64-v8a
 
 [buildozer]
