@@ -8,8 +8,7 @@ source.include_exts = py,png,jpg,kv,atlas
 
 version = 1.0
 
-requirements = python3,kivy,pillow,requests,beautifulsoup4,certifi,urllib3,charset-normalizer,idna
-
+requirements = python3,kivy,pillow,requests,beautifulsoup4,certifi,urllib3,charset-normalizer,idna,arabic_reshaper,python-bidi
 orientation = portrait
 fullscreen = 0
 
