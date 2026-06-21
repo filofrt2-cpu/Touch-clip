@@ -20,11 +20,49 @@ jobs:
           pip install --upgrade pip
           pip install cython
           pip install git+https://github.com/kivy/buildozer.git
+
+      - name: Cache Buildozer downloads (SDK, NDK, Ant, recipe sources)
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer/android/platform/android-sdk
+            ~/.buildozer/android/platform/android-ndk-r26b
+            ~/.buildozer/android/platform/apache-ant-1.9.4
+            ~/.buildozer/android/packages
+          key: buildozer-global-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            buildozer-global-${{ runner.os }}-
+
       - name: Clear lxml build cache
         run: |
           rm -rf .buildozer/android/platform/build-arm64-v8a/build/other_builds/lxml || true
+
       - name: Build APK
-        run: yes | buildozer android debug 2>&1 | tee build.log || true
+        shell: bash
+        run: |
+          set -o pipefail
+          : > build.log
+          max_attempts=3
+          success=0
+          for attempt in $(seq 1 $max_attempts); do
+            echo "=== Build attempt $attempt/$max_attempts ===" | tee -a build.log
+            yes | buildozer android debug 2>&1 | tee -a build.log
+            status=${PIPESTATUS[0]}
+            if [ "$status" -eq 0 ]; then
+              success=1
+              break
+            fi
+            echo "Attempt $attempt failed (exit $status)." | tee -a build.log
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              echo "Retrying in 30 seconds..." | tee -a build.log
+              sleep 30
+            fi
+          done
+          if [ "$success" -ne 1 ]; then
+            echo "All $max_attempts build attempts failed." | tee -a build.log
+          fi
+          exit 0
+
       - name: Upload log
         uses: actions/upload-artifact@v4
         with:
